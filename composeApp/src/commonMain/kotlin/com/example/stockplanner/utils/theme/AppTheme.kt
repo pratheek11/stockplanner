@@ -23,6 +23,7 @@ data class AppColors(
     val focusedContainerColor: Color,
     val unfocusedContainerColor: Color,
     val disabledContainerColor: Color,
+    val disabled: Color
 )
 
 data class AppSpacing(
@@ -66,7 +67,7 @@ fun AppTheme(
 ) {
     val colors = AppColors(
         primary = Color(0x8037C0FF),
-        secondary = Color(0xFF90CAF9),
+        secondary = Color(0xFFE7E7E7),
         background = Color(0xFFF5F5F5),
         warning = Color(0xFFFF692A),
         success = Color(0xFF25FF40),
@@ -78,6 +79,7 @@ fun AppTheme(
         focusedContainerColor = Color(0xFFFFFFFF),
         unfocusedContainerColor = Color(0xFFFFFFFF),
         disabledContainerColor = Color(0xFFEEEEEE),
+        disabled = Color(0x80E2E2E2)
     )
 
     val spacing = AppSpacing(

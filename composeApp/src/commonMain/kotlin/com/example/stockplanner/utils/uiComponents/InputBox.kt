@@ -23,7 +23,6 @@ fun InputBox(
         value = value,
         onValueChange = onTextChange,
         label = { Text(label) },
-
         modifier = Modifier
             .onFocusChanged { isFocused = it.isFocused }
             .clip(AppThemeValues.shapes.small) // circular shape
@@ -32,7 +31,6 @@ fun InputBox(
                 color = if (isFocused) Color(0x801E88E5) else Color.Gray.copy(alpha = 0.3f),
                 shape = AppThemeValues.shapes.small
             ),
-
         colors = TextFieldDefaults.colors(
             // background
             focusedContainerColor = AppThemeValues.colors.focusedContainerColor,
@@ -42,6 +40,6 @@ fun InputBox(
             // remove default underline
             focusedIndicatorColor = Color.Transparent,
             unfocusedIndicatorColor = Color.Transparent
-        )
+        ),
     )
 }

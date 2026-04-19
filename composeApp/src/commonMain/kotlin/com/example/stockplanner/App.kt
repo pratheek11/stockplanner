@@ -1,8 +1,7 @@
 package com.example.stockplanner
 
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import com.example.stockplanner.components.Home
 import com.example.stockplanner.components.Login
 import com.example.stockplanner.utils.models.AppState
 import com.example.stockplanner.utils.theme.AppTheme
@@ -13,10 +12,11 @@ fun App(appState: AppState) {
     AppTheme {
         if (!isLoggedIn.value) {
             Login(
-                onLogin = { appState.login() }
+                onLogin = { u, p -> appState.login(u, p) },
+                onSignup = { u, p -> appState.signup(u, p) },
             );
         } else {
-            Text("Home!")
+            Home()
         }
     }
 }
