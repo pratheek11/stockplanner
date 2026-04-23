@@ -2,79 +2,90 @@ package com.example.stockplanner.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import com.example.stockplanner.utils.models.AppState
-import com.example.stockplanner.utils.models.ChartHeaderList
+import com.example.stockplanner.utils.models.ChartScreen
 import com.example.stockplanner.utils.theme.AppThemeValues
+import com.example.stockplanner.utils.uiComponents.InputBox
 
 @Composable
 fun ChartsList(
     appState: AppState,
 ) {
-    Row(
+    val currentList by appState.currentList.collectAsState()
+    val chartListState = appState.chartItemByList[currentList.id]
+
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .height(56.dp)
+            .fillMaxHeight()
             .padding(AppThemeValues.spacing.small),
     ) {
-        Column(
-            modifier = Modifier
-                .clip(AppThemeValues.shapes.small)
-                .clickable {
-
-                }
-                .padding(AppThemeValues.spacing.small)
-        ) {
-            Text(
-                text = "+",
-                fontWeight = FontWeight.Bold,
-                color = Color.Black
-            )
-        }
-        Box(
-            modifier = Modifier
-                .fillMaxHeight()
-                .width(1.dp)
-                .background(Color.Gray.copy(alpha = 0.3f))
+        InputBox(
+            label = "Search",
+            onTextChange = {},
+            value = "",
+            modifier = Modifier.fillMaxWidth()
         )
-        Row(
+        Spacer(
             modifier = Modifier
+                .fillMaxWidth()
+                .height(AppThemeValues.spacing.small)
+        )
+        Column (
+            modifier = Modifier
+                .fillMaxWidth()
                 .weight(1f)
-                .horizontalScroll(rememberScrollState()),
-        ) {
-            val currentList by appState.currentList.collectAsState()
-            repeat(30){
-                Column(
-                    modifier = Modifier
-                        .clip(AppThemeValues.shapes.small)
-                        .clickable {
-                            appState.setCurrentList(ChartHeaderList("List $it", "$it$it"))
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(
+                AppThemeValues.spacing.small
+            )
+        ){
+            if (chartListState != null) {
+                for( item in chartListState){
+                    Column (
+                        modifier = Modifier
+                            .clip(AppThemeValues.shapes.small)
+                            .fillMaxWidth()
+                            .clickable {
+                                appState.setChartScreen(ChartScreen.FullChart)
+                            }
+                            .height(AppThemeValues.spacing.medium * 4)
+                            .background(Color.Gray.copy(alpha = 0.1f)),
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .padding(AppThemeValues.spacing.small)
+                                .fillMaxWidth()
+                                .fillMaxHeight(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            Text(
+                                text = item.id,
+                            )
+                            Text(
+                                text = item.lastPrice.toString(),
+                            )
                         }
-                        .padding(AppThemeValues.spacing.small)
-                ) {
-                    Text(
-                        text = "List $it",
-                        fontWeight = if (currentList.id == "$it$it") FontWeight.Bold else FontWeight.Normal,
-                        color = if (currentList.id == "$it$it") AppThemeValues.colors.primary else Color.Black,
-                    )
+                    }
                 }
             }
         }
