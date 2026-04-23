@@ -13,6 +13,7 @@ import com.example.stockplanner.utils.theme.AppThemeValues
 
 @Composable
 fun InputBox(
+    modifier: Modifier = Modifier,
     label: String,
     value: String,
     onTextChange: (String) -> Unit
@@ -23,7 +24,7 @@ fun InputBox(
         value = value,
         onValueChange = onTextChange,
         label = { Text(label) },
-        modifier = Modifier
+        modifier = modifier
             .onFocusChanged { isFocused = it.isFocused }
             .clip(AppThemeValues.shapes.small) // circular shape
             .border(

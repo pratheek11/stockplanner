@@ -3,7 +3,6 @@ package com.example.stockplanner.components
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.safeContentPadding
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -30,8 +29,8 @@ fun Home(
         ) {
             when (currentScreen) {
                 Screen.Charts -> ChartsHome(appState)
-                Screen.Holdings -> Text("Holdings Screen")
-                Screen.Profile -> Text("Profile Screen")
+                Screen.Holdings -> Holdings(appState)
+                Screen.Profile -> Profile(appState)
             }
         }
         NavigationBar(appState)
