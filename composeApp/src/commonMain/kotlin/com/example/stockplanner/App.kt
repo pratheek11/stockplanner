@@ -9,6 +9,11 @@ import com.example.stockplanner.utils.theme.AppTheme
 @Composable
 fun App(appState: AppState) {
     val isLoggedIn = appState.isLoggedIn.collectAsState();
+
+    LaunchedEffect(Unit) {
+        appState.loadQuote()
+    }
+
     AppTheme {
         if (!isLoggedIn.value) {
             Login(
@@ -16,7 +21,7 @@ fun App(appState: AppState) {
                 onSignup = { u, p -> appState.signup(u, p) },
             );
         } else {
-            Home()
+            Home(appState)
         }
     }
 }

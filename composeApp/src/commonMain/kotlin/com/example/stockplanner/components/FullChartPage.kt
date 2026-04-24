@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -21,6 +23,7 @@ import com.example.stockplanner.utils.theme.AppThemeValues
 fun FullChartPage(
     appState: AppState
 ) {
+    val currentItem by appState.currentFullChartItem.collectAsState()
     Column(
         modifier = Modifier
             .fillMaxHeight()
@@ -30,7 +33,7 @@ fun FullChartPage(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(AppThemeValues.spacing.small),
-            horizontalArrangement = Arrangement.Start,
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ){
             Text(
@@ -40,6 +43,9 @@ fun FullChartPage(
                     .clip(AppThemeValues.shapes.small)
                     .clickable{ appState.setChartScreen(ChartScreen.ChartList) }
                     .padding(AppThemeValues.spacing.small)
+            )
+            Text(
+                text = currentItem.id
             )
         }
     }

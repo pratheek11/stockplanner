@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.composeHotReload)
+    kotlin("plugin.serialization") version "2.3.20"
 }
 
 kotlin {
@@ -39,11 +40,15 @@ kotlin {
         browser()
         binaries.executable()
     }
-
+    val ktor_version = "3.0.0" // or latest stable
     sourceSets {
         androidMain.dependencies {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.activity.compose)
+            implementation("io.ktor:ktor-client-okhttp:${ktor_version}")
+        }
+        iosMain.dependencies {
+            implementation("io.ktor:ktor-client-darwin:${ktor_version}")
         }
         commonMain.dependencies {
             implementation(libs.compose.runtime)
@@ -54,7 +59,10 @@ kotlin {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
-            implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.7.1")
+            implementation("io.ktor:ktor-client-core:${ktor_version}")
+            implementation("io.ktor:ktor-client-content-negotiation:${ktor_version}")
+            implementation("io.ktor:ktor-serialization-kotlinx-json:${ktor_version}")
+            implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -65,6 +73,10 @@ kotlin {
         }
         webMain.dependencies {
             implementation(npm("@js-joda/timezone", "2.22.0"))
+            implementation("io.ktor:ktor-client-js:${ktor_version}")
+        }
+        jsMain.dependencies {
+            implementation("io.ktor:ktor-client-js:${ktor_version}")
         }
     }
 }
