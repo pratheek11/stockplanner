@@ -1,7 +1,14 @@
 package com.example.stockplanner.utils.models
 
+import com.example.stockplanner.utils.services.ApiService
+import com.example.stockplanner.utils.services.HttpClientFactory
+import com.example.stockplanner.utils.services.Quote
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+import kotlin.time.TimeSource
 
 data class NavigationButtons(
     val label: String,
@@ -19,6 +26,19 @@ data class ChartList(
     val lastPrice: Number
 )
 
+data class Holdings(
+    val invested: Number,
+    val current: Number,
+)
+
+data class HoldingItem(
+    val invested: Number,
+    val current: Number,
+    val quantityInStock: Int,
+    val investedTradedAmount: Double,
+    val currentTradedAmount: Double,
+)
+
 sealed class Screen {
     object Charts : Screen()
     object Holdings : Screen()
@@ -32,7 +52,8 @@ sealed class ChartScreen {
 }
 
 class AppState {
-
+    private val client = HttpClientFactory.create()
+    private val apiService = ApiService(client)
     private val _isLoggedIn = MutableStateFlow(true)
     val isLoggedIn: StateFlow<Boolean> = _isLoggedIn
     var userName: String = "";
@@ -41,8 +62,14 @@ class AppState {
     val currentScreen: StateFlow<Screen> = _currentScreen
     private val _currentChartScreen = MutableStateFlow<ChartScreen>(ChartScreen.ChartList)
     val currentChartScreen: StateFlow<ChartScreen> = _currentChartScreen
+    private val _currentFullChartItem = MutableStateFlow<ChartHeaderList>(ChartHeaderList("",""))
+    val currentFullChartItem: StateFlow<ChartHeaderList> = _currentFullChartItem
     private val _currentList = MutableStateFlow<ChartHeaderList>(ChartHeaderList("List 1", "11"));
     val currentList: StateFlow<ChartHeaderList> = _currentList
+    private val  _holdings = MutableStateFlow<Holdings>(Holdings(0, 0));
+    val holdings: StateFlow<Holdings> = _holdings
+    private val _currentPositions = MutableStateFlow<ArrayList<HoldingItem>>(ArrayList())
+    val currentPositions: StateFlow<ArrayList<HoldingItem>> = _currentPositions
 
     val appNavigationButtons = listOf(
         NavigationButtons("Charts", Screen.Charts),
@@ -51,6 +78,8 @@ class AppState {
     )
 
     val chartItemByList = HashMap<String, ArrayList<ChartList>>();
+    private val _quote = MutableStateFlow<Quote?>(null)
+    val quote: StateFlow<Quote?> = _quote
 
     constructor() {
         setChartList("11")
@@ -59,6 +88,17 @@ class AppState {
         insertItemIntoChartList("11", ChartList(label = "NIFTYBEES", id = "NIFTYBEES", lastPrice = 1))
         insertItemIntoChartList("11", ChartList(label = "ATHERENE", id = "ATHERENE", lastPrice = 1))
         insertItemIntoChartList("11", ChartList(label = "ITC", id = "ITC", lastPrice = 1))
+    }
+
+    fun loadQuote() {
+        CoroutineScope(Dispatchers.Main).launch {
+            try {
+                val result = apiService.getQuote()
+                _quote.value = result
+            } catch (e: Exception) {
+                println("API ERROR: ${e.message}") // 👈 important
+            }
+        }
     }
 
     fun login(userName: String, password: String) {
@@ -107,5 +147,13 @@ class AppState {
 
     fun removeChartList(listName: String) {
         chartItemByList.remove(listName)
+    }
+
+    fun setHoldings(invested: Number, current: Number) {
+        _holdings.value = Holdings(invested, current)
+    }
+
+    fun setCurrentFullChart(id: String, label: String) {
+        _currentFullChartItem.value = ChartHeaderList(id, label)
     }
 }
