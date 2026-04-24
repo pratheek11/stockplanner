@@ -25,7 +25,8 @@ fun Buttons(
     onClick: () -> Unit,
     enabled: Boolean = true,
     severity: String,
-    icon: @Composable (() -> Unit)? = null
+    icon: @Composable (() -> Unit)? = null,
+    modifier: Modifier = Modifier,
 ) {
     val btnColor = when (severity) {
         "warning" -> AppThemeValues.colors.warning
@@ -38,7 +39,7 @@ fun Buttons(
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
-        modifier = Modifier
+        modifier = modifier
             .clip(AppThemeValues.shapes.small)
             .background(if (enabled) btnColor else AppThemeValues.colors.disabled)
             .clickable(enabled = enabled) { onClick() }

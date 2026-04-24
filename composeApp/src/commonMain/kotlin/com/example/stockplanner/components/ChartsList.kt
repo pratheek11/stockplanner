@@ -66,6 +66,7 @@ fun ChartsList(
                             .fillMaxWidth()
                             .clickable {
                                 appState.setChartScreen(ChartScreen.FullChart)
+                                appState.setCurrentFullChart(item.id, item.label)
                             }
                             .height(AppThemeValues.spacing.medium * 4)
                             .background(Color.Gray.copy(alpha = 0.1f)),

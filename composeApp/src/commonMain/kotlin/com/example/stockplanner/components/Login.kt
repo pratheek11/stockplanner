@@ -82,16 +82,14 @@ fun Login(
                 onClick = { onLogin(username, password) },
                 severity = "info",
                 enabled = (inputFilter.validateLogin(username, password).success)
-            ) {
-            }
+            )
         } else {
             Buttons(
                 text = "Signup",
                 onClick = { onSignup(username, password) },
                 severity = "info",
                 enabled = (inputFilter.validateLogin(username, password).success)
-            ) {
-            }
+            )
         }
     }
 }
