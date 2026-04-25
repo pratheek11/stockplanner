@@ -6,6 +6,8 @@ import com.example.stockplanner.utils.services.Quote
 import com.example.stockplanner.utils.services.StockList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -86,7 +88,7 @@ class AppState {
     val currentChartScreen: StateFlow<ChartScreen> = _currentChartScreen
     private val _currentFullChartItem = MutableStateFlow<ChartHeaderList>(ChartHeaderList("",""))
     val currentFullChartItem: StateFlow<ChartHeaderList> = _currentFullChartItem
-    private val _currentList = MutableStateFlow<ChartHeaderList>(ChartHeaderList("List 1", "11"));
+    private val _currentList = MutableStateFlow<ChartHeaderList>(ChartHeaderList("List 0", "00"));
     val currentList: StateFlow<ChartHeaderList> = _currentList
     private val  _holdings = MutableStateFlow<Holdings>(Holdings(0, 0));
     val holdings: StateFlow<Holdings> = _holdings
@@ -99,20 +101,19 @@ class AppState {
         NavigationButtons("Profile", Screen.Profile)
     )
 
-    val chartItemByList = HashMap<String, ArrayList<ChartList>>();
+    private val _chartItemByList = MutableStateFlow<HashMap<String, ArrayList<StockList>>>(HashMap())
+    val chartItemByList: StateFlow<HashMap<String, ArrayList<StockList>>> = _chartItemByList
     private val _quote = MutableStateFlow<Quote?>(null)
     val quote: StateFlow<Quote?> = _quote
 
     private val _stockList = MutableStateFlow<ArrayList<StockList>>(ArrayList<StockList>())
     val stockList: StateFlow<ArrayList<StockList>> = _stockList
 
+    private var searchJob: Job? = null
+    private val _searchResults = MutableStateFlow<List<StockList>>(ArrayList<StockList>())
+    val searchResults: StateFlow<List<StockList>> = _searchResults
+
     constructor() {
-        setChartList("11")
-        insertItemIntoChartList("11", ChartList(label = "MODINSU", id = "MODINSU", lastPrice = 1))
-        insertItemIntoChartList("11", ChartList(label = "MOTHERSON", id = "MOTHERSON", lastPrice = 1))
-        insertItemIntoChartList("11", ChartList(label = "NIFTYBEES", id = "NIFTYBEES", lastPrice = 1))
-        insertItemIntoChartList("11", ChartList(label = "ATHERENE", id = "ATHERENE", lastPrice = 1))
-        insertItemIntoChartList("11", ChartList(label = "ITC", id = "ITC", lastPrice = 1))
     }
 
     fun loadQuote() {
@@ -145,6 +146,30 @@ class AppState {
             }
         }
     }
+
+//    fun getByKey(key: String): List<StockList> {
+//        if (key.isBlank()) return emptyList()
+//        return _stockList.value.filter { ele ->
+//            ele.name.contains(key, ignoreCase = true) ||
+//                    ele.trading_symbol.contains(key, ignoreCase = true)
+//        }
+//    }
+
+    fun getByKey(key: String) {
+        searchJob?.cancel()
+        searchJob = CoroutineScope(Dispatchers.Default).launch {
+            delay(300) // wait 300ms after last keystroke
+            if (key.isBlank() || key.length < 3) {
+                _searchResults.value = emptyList()
+                return@launch
+            }
+            _searchResults.value = _stockList.value.filter { ele ->
+               (ele.name.contains(key, ignoreCase = true) || ele.trading_symbol.contains(key, ignoreCase = true))&& (ele.segment.contains("NSE_EQ") || ele.segment.contains("BSE_EQ"))
+            }
+                .sortedBy { it.name }
+        }
+    }
+
 
     fun login(userName: String, password: String) {
         if (userName.isNotBlank() && password.isNotBlank()) {
@@ -183,15 +208,19 @@ class AppState {
     }
 
     fun setChartList(listName: String) {
-        chartItemByList[listName] = ArrayList()
+        val newMap = HashMap(_chartItemByList.value)
+        newMap[listName] = ArrayList()
+        _chartItemByList.value = newMap
     }
 
-    fun insertItemIntoChartList(listName: String, item: ChartList) {
-        chartItemByList[listName]?.add(item)
+    fun insertItemIntoChartList(listName: String, items: List<StockList>) {
+        val newMap = HashMap(_chartItemByList.value)
+        newMap[listName] = ArrayList(items)
+        _chartItemByList.value = newMap
     }
 
     fun removeChartList(listName: String) {
-        chartItemByList.remove(listName)
+        _chartItemByList.value.remove(listName)
     }
 
     fun setHoldings(invested: Number, current: Number) {

@@ -3,6 +3,8 @@ package com.example.stockplanner.utils.services
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -29,15 +31,15 @@ data class StockList(
     val segment: String,
     val name: String,
     val exchange: String,
-    val isin: String,
+    val isin: String? = null,  // nullable with default
     val instrument_type: String,
     val instrument_key: String,
-    val lot_size: String,
-    val freeze_quantity: String,
+    val lot_size: Int? = null,
+    val freeze_quantity: Double? = null,
     val exchange_token: String,
-    val tick_size: String,
+    val tick_size: Double? = null,
     val trading_symbol: String,
-    val qty_multiplier: String
+    val qty_multiplier: Double? = null
 )
 
 @Serializable
@@ -46,6 +48,8 @@ data class CandleData(
 )
 
 class ApiService(private val client: HttpClient) {
+
+    private val json = Json { ignoreUnknownKeys = true }
 
     suspend fun getUsers() {
         return client.get("https://jsonplaceholder.typicode.com/users").body()
@@ -56,9 +60,9 @@ class ApiService(private val client: HttpClient) {
     }
 
     @OptIn(ExperimentalResourceApi::class)
-    suspend fun loadAndParse(): ArrayList<StockList> {
+    suspend fun loadAndParse(): ArrayList<StockList> = withContext(Dispatchers.Default) {
         val jsonString = Res.readBytes("files/nse.json").decodeToString()
-        return Json.decodeFromString<ArrayList<StockList>>(jsonString)
+        json.decodeFromString<ArrayList<StockList>>(jsonString)
     }
 
     suspend fun getFullChartData(instrumentKey: String): CandleResponse {
