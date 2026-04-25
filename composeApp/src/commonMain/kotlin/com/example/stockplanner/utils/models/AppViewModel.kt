@@ -3,12 +3,16 @@ package com.example.stockplanner.utils.models
 import com.example.stockplanner.utils.services.ApiService
 import com.example.stockplanner.utils.services.HttpClientFactory
 import com.example.stockplanner.utils.services.Quote
+import com.example.stockplanner.utils.services.StockList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import kotlin.time.TimeSource
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.double
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonPrimitive
 
 data class NavigationButtons(
     val label: String,
@@ -51,6 +55,24 @@ sealed class ChartScreen {
 
 }
 
+data class Candle(
+    val timestamp: String,
+    val open: Double,
+    val high: Double,
+    val low: Double,
+    val close: Double,
+    val volume: Int
+)
+
+fun List<JsonElement>.toCandle() = Candle(
+    timestamp = this[0].jsonPrimitive.content,
+    open      = this[1].jsonPrimitive.double,
+    high      = this[2].jsonPrimitive.double,
+    low       = this[3].jsonPrimitive.double,
+    close     = this[4].jsonPrimitive.double,
+    volume    = this[5].jsonPrimitive.int
+)
+
 class AppState {
     private val client = HttpClientFactory.create()
     private val apiService = ApiService(client)
@@ -81,6 +103,9 @@ class AppState {
     private val _quote = MutableStateFlow<Quote?>(null)
     val quote: StateFlow<Quote?> = _quote
 
+    private val _stockList = MutableStateFlow<ArrayList<StockList>>(ArrayList<StockList>())
+    val stockList: StateFlow<ArrayList<StockList>> = _stockList
+
     constructor() {
         setChartList("11")
         insertItemIntoChartList("11", ChartList(label = "MODINSU", id = "MODINSU", lastPrice = 1))
@@ -95,6 +120,26 @@ class AppState {
             try {
                 val result = apiService.getQuote()
                 _quote.value = result
+            } catch (e: Exception) {
+                println("API ERROR: ${e.message}") // 👈 important
+            }
+        }
+    }
+
+    suspend fun loadStockList() {
+        try {
+            _stockList.value = apiService.loadAndParse()
+        } catch (e: Exception) {
+            println("API ERROR: ${e.message}")
+        }
+    }
+
+    fun loadChartData(instrumentKey: String) {
+        CoroutineScope(Dispatchers.Main).launch {
+            try {
+                val result = apiService.getFullChartData(instrumentKey)
+                val candles = result.data.candles.map { it.toCandle() }
+                println("API RESULT: $candles")
             } catch (e: Exception) {
                 println("API ERROR: ${e.message}") // 👈 important
             }

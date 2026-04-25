@@ -12,6 +12,7 @@ fun App(appState: AppState) {
 
     LaunchedEffect(Unit) {
         appState.loadQuote()
+        appState.loadStockList()
     }
 
     AppTheme {

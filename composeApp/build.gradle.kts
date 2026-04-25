@@ -59,6 +59,7 @@ kotlin {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
+            implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
             implementation("io.ktor:ktor-client-core:${ktor_version}")
             implementation("io.ktor:ktor-client-content-negotiation:${ktor_version}")
             implementation("io.ktor:ktor-serialization-kotlinx-json:${ktor_version}")
@@ -122,4 +123,9 @@ compose.desktop {
             packageVersion = "1.0.0"
         }
     }
+}
+
+compose.resources {
+    publicResClass = true
+    generateResClass = always
 }
