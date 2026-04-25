@@ -61,7 +61,7 @@ fun ChartsMenuList(
                 .horizontalScroll(rememberScrollState()),
         ) {
             val currentList by appState.currentList.collectAsState()
-            repeat(30){
+            repeat(2){
                 Column(
                     modifier = Modifier
                         .clip(AppThemeValues.shapes.small)

@@ -16,21 +16,27 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import com.example.stockplanner.utils.models.AppState
 import com.example.stockplanner.utils.models.ChartScreen
+import com.example.stockplanner.utils.services.StockList
 import com.example.stockplanner.utils.theme.AppThemeValues
 import com.example.stockplanner.utils.uiComponents.InputBox
+import kotlinx.coroutines.flow.MutableStateFlow
 
 @Composable
 fun ChartsList(
     appState: AppState,
 ) {
     val currentList by appState.currentList.collectAsState()
-    val chartListState = appState.chartItemByList[currentList.id]
+    var searchChart by remember { mutableStateOf("") }
+    val searchResults by appState.searchResults.collectAsState()
 
     Column(
         modifier = Modifier
@@ -40,8 +46,11 @@ fun ChartsList(
     ) {
         InputBox(
             label = "Search",
-            onTextChange = {},
-            value = "",
+            onTextChange = { newText ->
+                searchChart = newText
+                appState.getByKey(newText)
+            },
+            value = searchChart,
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(
@@ -58,34 +67,29 @@ fun ChartsList(
                 AppThemeValues.spacing.small
             )
         ){
-            if (chartListState != null) {
-                for( item in chartListState){
-                    Column (
-                        modifier = Modifier
-                            .clip(AppThemeValues.shapes.small)
-                            .fillMaxWidth()
-                            .clickable {
-                                appState.setChartScreen(ChartScreen.FullChart)
-                                appState.setCurrentFullChart(item.id, item.label)
-                            }
-                            .height(AppThemeValues.spacing.medium * 4)
-                            .background(Color.Gray.copy(alpha = 0.1f)),
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .padding(AppThemeValues.spacing.small)
-                                .fillMaxWidth()
-                                .fillMaxHeight(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                        ) {
-                            Text(
-                                text = item.id,
-                            )
-                            Text(
-                                text = item.lastPrice.toString(),
-                            )
+            searchResults.forEach { item ->
+                Column(
+                    modifier = Modifier
+                        .clip(AppThemeValues.shapes.small)
+                        .fillMaxWidth()
+                        .clickable {
+                            appState.setChartScreen(ChartScreen.FullChart)
+                            appState.setCurrentFullChart(item.instrument_key, item.trading_symbol)
                         }
+                        .height(AppThemeValues.spacing.medium * 4)
+                        .background(Color.Gray.copy(alpha = 0.1f)),
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .padding(AppThemeValues.spacing.small)
+                            .fillMaxWidth()
+                            .fillMaxHeight(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Text(text = item.name)
+                        Text(text = item.trading_symbol)
+                        Text(text = item.exchange)
                     }
                 }
             }
