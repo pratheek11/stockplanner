@@ -68,7 +68,7 @@ fun Profile(
                     .clip(AppThemeValues.shapes.small)
                     .background(Color.Gray.copy(alpha = 0.1f)),
                 verticalArrangement = Arrangement.SpaceAround,
-                horizontalAlignment = Alignment.End
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
                     text = quote?.quote.toString(),
