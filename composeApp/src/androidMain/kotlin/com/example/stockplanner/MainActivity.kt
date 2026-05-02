@@ -6,6 +6,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.stockplanner.database.DatabaseFactory
+import com.example.stockplanner.database.DatabaseProvider
 import com.example.stockplanner.utils.models.AppState
 
 class MainActivity : ComponentActivity() {
@@ -13,8 +15,15 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
+        appContext = applicationContext
+
+        // ✅ Initialize provider (NOT repository directly)
+        DatabaseProvider.initialize(DatabaseFactory())
+
+        val dbManager = DatabaseProvider.manager
+
         setContent {
-            App(AppState())
+            App(AppState(dbManager))
         }
     }
 }
@@ -22,5 +31,5 @@ class MainActivity : ComponentActivity() {
 @Preview
 @Composable
 fun AppAndroidPreview() {
-    App(AppState())
+    App(AppState(dbManager = DatabaseProvider.manager))
 }

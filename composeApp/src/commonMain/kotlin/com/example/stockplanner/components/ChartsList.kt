@@ -27,6 +27,7 @@ import com.example.stockplanner.utils.models.AppState
 import com.example.stockplanner.utils.models.ChartScreen
 import com.example.stockplanner.utils.services.StockList
 import com.example.stockplanner.utils.theme.AppThemeValues
+import com.example.stockplanner.utils.uiComponents.Buttons
 import com.example.stockplanner.utils.uiComponents.InputBox
 import kotlinx.coroutines.flow.MutableStateFlow
 
@@ -35,6 +36,7 @@ fun ChartsList(
     appState: AppState,
 ) {
     val currentList by appState.currentList.collectAsState()
+    val currentWatchlist by appState.chartItemByList.collectAsState()
     var searchChart by remember { mutableStateOf("") }
     val searchResults by appState.searchResults.collectAsState()
 
@@ -75,6 +77,40 @@ fun ChartsList(
                         .clickable {
                             appState.setChartScreen(ChartScreen.FullChart)
                             appState.setCurrentFullChart(item.instrument_key, item.trading_symbol)
+                        }
+                        .height(AppThemeValues.spacing.medium * 4)
+                        .background(Color.Gray.copy(alpha = 0.1f)),
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .padding(AppThemeValues.spacing.small)
+                            .fillMaxWidth()
+                            .fillMaxHeight(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Text(text = item.name)
+                        Text(text = item.trading_symbol)
+                        Text(text = item.exchange)
+                        Buttons(
+                            modifier = Modifier,
+                            text = "+",
+                            onClick = {
+
+                            },
+                            severity = "secondary"
+                        )
+                    }
+                }
+            }
+            if(searchResults.isEmpty()) currentWatchlist.get(currentList?.id)?.forEach { item ->
+                Column(
+                    modifier = Modifier
+                        .clip(AppThemeValues.shapes.small)
+                        .fillMaxWidth()
+                        .clickable {
+                            appState.setChartScreen(ChartScreen.FullChart)
+                            appState.setCurrentFullChart(item.name, item.trading_symbol)
                         }
                         .height(AppThemeValues.spacing.medium * 4)
                         .background(Color.Gray.copy(alpha = 0.1f)),

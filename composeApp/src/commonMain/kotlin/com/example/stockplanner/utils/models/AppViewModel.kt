@@ -1,9 +1,14 @@
 package com.example.stockplanner.utils.models
 
+import com.example.stockplanner.components.Alerts
+import com.example.stockplanner.database.AppDatabaseRepository
+import com.example.stockplanner.database.DatabaseManager
+import com.example.stockplanner.database.databaseDispatcher
 import com.example.stockplanner.utils.services.ApiService
 import com.example.stockplanner.utils.services.HttpClientFactory
 import com.example.stockplanner.utils.services.Quote
 import com.example.stockplanner.utils.services.StockList
+import com.example.stockplanner.db.AppDatabase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -15,6 +20,8 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.double
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonPrimitive
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 data class NavigationButtons(
     val label: String,
@@ -75,25 +82,35 @@ fun List<JsonElement>.toCandle() = Candle(
     volume    = this[5].jsonPrimitive.int
 )
 
-class AppState {
+class AppState(
+    private val dbManager: DatabaseManager? = null,
+) {
     private val client = HttpClientFactory.create()
     private val apiService = ApiService(client)
-    private val _isLoggedIn = MutableStateFlow(true)
+    
+    // Database instance
+    private val database: AppDatabase
+        get() = AppDatabaseRepository.getInstance()
+    
+    private val _isLoggedIn = MutableStateFlow(false)
     val isLoggedIn: StateFlow<Boolean> = _isLoggedIn
     var userName: String = "";
-    var password: String = "";
+    var email: String = "";
     private val _currentScreen = MutableStateFlow<Screen>(Screen.Charts)
     val currentScreen: StateFlow<Screen> = _currentScreen
     private val _currentChartScreen = MutableStateFlow<ChartScreen>(ChartScreen.ChartList)
     val currentChartScreen: StateFlow<ChartScreen> = _currentChartScreen
-    private val _currentFullChartItem = MutableStateFlow<ChartHeaderList>(ChartHeaderList("",""))
-    val currentFullChartItem: StateFlow<ChartHeaderList> = _currentFullChartItem
-    private val _currentList = MutableStateFlow<ChartHeaderList>(ChartHeaderList("List 0", "00"));
-    val currentList: StateFlow<ChartHeaderList> = _currentList
+    private val _chatHeaderList = MutableStateFlow<List<ChartHeaderList>>(ArrayList<ChartHeaderList>());
+    val chartHeaderList: StateFlow<List<ChartHeaderList>> = _chatHeaderList
+    private val _currentList = MutableStateFlow<ChartHeaderList?>(null)
+    val currentList: StateFlow<ChartHeaderList?> = _currentList
     private val  _holdings = MutableStateFlow<Holdings>(Holdings(0, 0));
     val holdings: StateFlow<Holdings> = _holdings
     private val _currentPositions = MutableStateFlow<ArrayList<HoldingItem>>(ArrayList())
     val currentPositions: StateFlow<ArrayList<HoldingItem>> = _currentPositions
+
+    private val _currentFullChart = MutableStateFlow<ChartHeaderList?>(null)
+    val currentFullChart: StateFlow<ChartHeaderList?> = _currentFullChart
 
     val appNavigationButtons = listOf(
         NavigationButtons("Charts", Screen.Charts),
@@ -112,8 +129,11 @@ class AppState {
     private var searchJob: Job? = null
     private val _searchResults = MutableStateFlow<List<StockList>>(ArrayList<StockList>())
     val searchResults: StateFlow<List<StockList>> = _searchResults
+    private val _uiMessage = MutableStateFlow<String?>(null)
+    val uiMessage: StateFlow<String?> = _uiMessage
 
-    constructor() {
+    fun clearMessage() {
+        _uiMessage.value = null
     }
 
     fun loadQuote() {
@@ -147,13 +167,109 @@ class AppState {
         }
     }
 
-//    fun getByKey(key: String): List<StockList> {
-//        if (key.isBlank()) return emptyList()
-//        return _stockList.value.filter { ele ->
-//            ele.name.contains(key, ignoreCase = true) ||
-//                    ele.trading_symbol.contains(key, ignoreCase = true)
-//        }
-//    }
+    // ========== DATABASE OPERATIONS ==========
+    
+    /**
+     * Save a watchlist item to database
+     * Note: Adjust this based on your actual AppDatabase schema
+     */
+    fun saveWatchlistItem(symbol: String, name: String, price: Double) {
+        CoroutineScope(databaseDispatcher).launch {
+            try {
+//                dbManager?.saveWatchlistItem(symbol, name, price)
+                println("Watchlist item saved: $symbol")
+            } catch (e: Exception) {
+                println("Database ERROR: ${e.message}")
+            }
+        }
+    }
+
+    /**
+     * Load all watchlist items from database
+     */
+    fun loadWatchlistItems() {
+        CoroutineScope(databaseDispatcher).launch {
+            try {
+                // Example: val items = database.appQueries.selectAllWatchlist().executeAsList()
+                // Then update a StateFlow with the items
+                println("Loaded watchlist items from database")
+            } catch (e: Exception) {
+                println("Database ERROR: ${e.message}")
+            }
+        }
+    }
+
+    /**
+     * Delete a watchlist item from database
+     */
+    fun deleteWatchlistItem(symbol: String) {
+        CoroutineScope(databaseDispatcher).launch {
+            try {
+                // Example: database.appQueries.deleteWatchlistItem(symbol)
+                println("Watchlist item deleted: $symbol")
+            } catch (e: Exception) {
+                println("Database ERROR: ${e.message}")
+            }
+        }
+    }
+
+    /**
+     * Save portfolio holding to database
+     */
+    fun savePortfolioHolding(symbol: String, quantity: Int, purchasePrice: Double, purchaseDate: String) {
+        CoroutineScope(databaseDispatcher).launch {
+            try {
+                // Example: database.appQueries.insertPortfolioHolding(symbol, quantity, purchasePrice, purchaseDate)
+                println("Portfolio holding saved: $symbol - Qty: $quantity")
+            } catch (e: Exception) {
+                println("Database ERROR: ${e.message}")
+            }
+        }
+    }
+
+    /**
+     * Load all portfolio holdings from database
+     */
+    fun loadPortfolioHoldings() {
+        CoroutineScope(databaseDispatcher).launch {
+            try {
+                // Example: val holdings = database.appQueries.selectAllPortfolioHoldings().executeAsList()
+                // Then update StateFlow to refresh UI
+                println("Loaded portfolio holdings from database")
+            } catch (e: Exception) {
+                println("Database ERROR: ${e.message}")
+            }
+        }
+    }
+
+    /**
+     * Update portfolio holding quantity
+     */
+    fun updatePortfolioHolding(symbol: String, newQuantity: Int) {
+        CoroutineScope(databaseDispatcher).launch {
+            try {
+                // Example: database.appQueries.updatePortfolioHoldingQuantity(newQuantity, symbol)
+                println("Portfolio holding updated: $symbol - New Qty: $newQuantity")
+            } catch (e: Exception) {
+                println("Database ERROR: ${e.message}")
+            }
+        }
+    }
+
+    /**
+     * Delete portfolio holding
+     */
+    fun deletePortfolioHolding(symbol: String) {
+        CoroutineScope(databaseDispatcher).launch {
+            try {
+                // Example: database.appQueries.deletePortfolioHolding(symbol)
+                println("Portfolio holding deleted: $symbol")
+            } catch (e: Exception) {
+                println("Database ERROR: ${e.message}")
+            }
+        }
+    }
+
 
     fun getByKey(key: String) {
         searchJob?.cancel()
@@ -173,9 +289,14 @@ class AppState {
 
     fun login(userName: String, password: String) {
         if (userName.isNotBlank() && password.isNotBlank()) {
-            _isLoggedIn.value = true
-            this.userName = userName
-            this.password = password
+            val userCreds = dbManager?.getUserDetails(userName, password)
+            if (userCreds != null) {
+                _isLoggedIn.value = true
+                this.userName = userCreds.userName
+                this.email = userCreds.email
+            } else {
+                _uiMessage.value = "Invalid username or password"
+            }
         }
     }
 
@@ -183,11 +304,16 @@ class AppState {
         _isLoggedIn.value = false
     }
 
-    fun signup(userName: String, password: String) {
+    fun signup(userName: String, password: String, email: String) {
         if (userName.isNotBlank() && password.isNotBlank()) {
-            _isLoggedIn.value = true
-            this.userName = userName
-            this.password = password
+            val userCreds = dbManager?.signUserDetails(userName, password, email)
+            if(userCreds != null && userCreds.contains("Success")) {
+                _isLoggedIn.value = true
+                this.userName = userName
+                this.email = email
+            } else {
+                _uiMessage.value = "Can't Sign up"
+            }
         }
     }
 
@@ -203,8 +329,35 @@ class AppState {
         _currentChartScreen.value = screen
     }
 
-    fun setCurrentList(list: ChartHeaderList) {
-        _currentList.value = list
+    fun setCurrentList(label: ChartHeaderList) {
+        _currentList.value = label
+    }
+
+    fun setCurrentFullChart(label: String, id: String) {
+        _currentList.value = ChartHeaderList(label, id)
+    }
+
+    fun deleteUserWatchList() {
+        dbManager?.deleteUserWatchlist(userName)
+    }
+
+    fun getChartHeaderList() {
+        var list = dbManager?.getUserWatchlist(userName)
+        list?.forEach { watchlist ->
+            var list = _chatHeaderList.value
+            val newEle = ChartHeaderList(watchlist.label, watchlist.watchListId)
+            list = list.plus(newEle)
+            _chatHeaderList.value = list
+        }
+    }
+
+    @OptIn(ExperimentalUuidApi::class)
+    fun addChartHeaderList(label: String) {
+        var list = _chatHeaderList.value
+        val newEle = ChartHeaderList(label, Uuid.generateV4().toString())
+        list = list.plus(newEle)
+        _chatHeaderList.value = list
+        dbManager?.insertUserWatchlist(userName, newEle.label, newEle.id)
     }
 
     fun setChartList(listName: String) {
@@ -225,9 +378,5 @@ class AppState {
 
     fun setHoldings(invested: Number, current: Number) {
         _holdings.value = Holdings(invested, current)
-    }
-
-    fun setCurrentFullChart(id: String, label: String) {
-        _currentFullChartItem.value = ChartHeaderList(id, label)
     }
 }

@@ -26,7 +26,7 @@ import com.example.stockplanner.utils.uiComponents.Tabs
 @Composable
 fun Login(
     onLogin: (String, String) -> Unit,
-    onSignup: (String, String) -> Unit,
+    onSignup: (String, String, String) -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -58,6 +58,7 @@ fun Login(
         Spacer(Modifier.height(20.dp))
         var username by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
+        var email by remember { mutableStateOf("") }
         InputBox(
             value = username,
             onTextChange = { username = it },
@@ -70,6 +71,14 @@ fun Login(
             label = "Password"
         )
         Spacer(Modifier.height(20.dp))
+        if(selectedTab == 1) {
+            InputBox(
+                value = email,
+                onTextChange = { email = it },
+                label = "Email"
+            )
+            Spacer(Modifier.height(20.dp))
+        }
         if(username.isNotBlank() && password.isNotBlank() && !inputFilter.validateLogin(username, password).success) {
             Text(
                 inputFilter.validateLogin(username, password).errorMessage,
@@ -86,7 +95,7 @@ fun Login(
         } else {
             Buttons(
                 text = "Signup",
-                onClick = { onSignup(username, password) },
+                onClick = { onSignup(username, password, email) },
                 severity = "info",
                 enabled = (inputFilter.validateLogin(username, password).success)
             )

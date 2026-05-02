@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -29,6 +30,11 @@ import com.example.stockplanner.utils.theme.AppThemeValues
 fun ChartsMenuList(
     appState: AppState,
 ) {
+    LaunchedEffect(Unit) {
+        appState.getChartHeaderList()
+    }
+    val currentItem by appState.currentList.collectAsState()
+    val currentList by appState.chartHeaderList.collectAsState()
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -39,7 +45,7 @@ fun ChartsMenuList(
             modifier = Modifier
                 .clip(AppThemeValues.shapes.small)
                 .clickable {
-
+                    appState.addChartHeaderList(appState.chartHeaderList.value.size.toString())
                 }
                 .padding(AppThemeValues.spacing.small)
         ) {
@@ -60,20 +66,19 @@ fun ChartsMenuList(
                 .weight(1f)
                 .horizontalScroll(rememberScrollState()),
         ) {
-            val currentList by appState.currentList.collectAsState()
-            repeat(2){
+            for (item in currentList) {
                 Column(
                     modifier = Modifier
                         .clip(AppThemeValues.shapes.small)
                         .clickable {
-                            appState.setCurrentList(ChartHeaderList("List $it", "$it$it"))
+                            appState.setCurrentList(ChartHeaderList(item.label, item.id))
                         }
                         .padding(AppThemeValues.spacing.small)
                 ) {
                     Text(
-                        text = "List $it",
-                        fontWeight = if (currentList.id == "$it$it") FontWeight.Bold else FontWeight.Normal,
-                        color = if (currentList.id == "$it$it") AppThemeValues.colors.primary else Color.Black,
+                        text = item.label,
+                        fontWeight = if (currentItem?.id == item.id) FontWeight.Bold else FontWeight.Normal,
+                        color = if (currentItem?.id == item.id) AppThemeValues.colors.primary else Color.Black,
                     )
                 }
             }
