@@ -24,7 +24,7 @@ import com.example.stockplanner.utils.theme.AppThemeValues
 fun FullChartPage(
     appState: AppState
 ) {
-    val currentItem by appState.currentFullChartItem.collectAsState()
+    val currentItem by appState.currentFullChart.collectAsState()
     LaunchedEffect(Unit) {
         appState.loadChartData("NSE_EQ|INE839G01010")
     }
@@ -49,7 +49,7 @@ fun FullChartPage(
                     .padding(AppThemeValues.spacing.small)
             )
             Text(
-                text = currentItem.id
+                text = currentItem?.label + ""
             )
         }
     }
