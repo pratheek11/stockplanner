@@ -22,6 +22,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.stockplanner.utils.models.AppState
 import com.example.stockplanner.utils.models.ChartHeaderList
 import com.example.stockplanner.utils.theme.AppThemeValues
@@ -33,53 +34,97 @@ fun ChartsMenuList(
     LaunchedEffect(Unit) {
         appState.getChartHeaderList()
     }
+
     val currentItem by appState.currentList.collectAsState()
     val currentList by appState.chartHeaderList.collectAsState()
+
+    // Auto-select first item when list loads
+    LaunchedEffect(currentList) {
+        if (currentItem == null && currentList.isNotEmpty()) {
+            val first = currentList.first()
+            appState.setCurrentList(ChartHeaderList(first.label, first.id))
+            appState.getItemFromChartListByList(first.id)
+        }
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(56.dp)
-            .padding(AppThemeValues.spacing.small),
+            .background(Color.White)
+            .padding(horizontal = AppThemeValues.spacing.small),
+        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
     ) {
-        Column(
+        // Add Button
+        Box(
             modifier = Modifier
                 .clip(AppThemeValues.shapes.small)
+                .background(AppThemeValues.colors.primary.copy(alpha = 0.1f))
                 .clickable {
-                    appState.addChartHeaderList(appState.chartHeaderList.value.size.toString())
+                    appState.addChartHeaderList("List ${appState.chartHeaderList.value.size + 1}")
                 }
-                .padding(AppThemeValues.spacing.small)
+                .padding(horizontal = 12.dp, vertical = 6.dp),
+            contentAlignment = androidx.compose.ui.Alignment.Center
         ) {
             Text(
                 text = "+",
                 fontWeight = FontWeight.Bold,
-                color = Color.Black
+                color = AppThemeValues.colors.primary,
+                fontSize = 18.sp
             )
         }
+
+        // Divider
         Box(
             modifier = Modifier
-                .fillMaxHeight()
+                .padding(horizontal = 8.dp)
+                .fillMaxHeight(0.6f)
                 .width(1.dp)
                 .background(Color.Gray.copy(alpha = 0.3f))
         )
+
+        // Tabs
         Row(
             modifier = Modifier
                 .weight(1f)
                 .horizontalScroll(rememberScrollState()),
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
         ) {
-            for (item in currentList) {
+            currentList.forEach { item ->
+                val isSelected = currentItem?.id == item.id
                 Column(
                     modifier = Modifier
+                        .padding(end = 4.dp)
                         .clip(AppThemeValues.shapes.small)
+                        .background(
+                            if (isSelected) AppThemeValues.colors.primary.copy(alpha = 0.1f)
+                            else Color.Transparent
+                        )
                         .clickable {
                             appState.setCurrentList(ChartHeaderList(item.label, item.id))
+                            // Load list immediately on click
+                            appState.getItemFromChartListByList(item.id)
                         }
-                        .padding(AppThemeValues.spacing.small)
+                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                    horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
                 ) {
                     Text(
                         text = item.label,
-                        fontWeight = if (currentItem?.id == item.id) FontWeight.Bold else FontWeight.Normal,
-                        color = if (currentItem?.id == item.id) AppThemeValues.colors.primary else Color.Black,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                        color = if (isSelected) AppThemeValues.colors.primary else Color.Gray,
+                        fontSize = 14.sp
                     )
+                    // Active indicator
+                    if (isSelected) {
+                        Box(
+                            modifier = Modifier
+                                .padding(top = 2.dp)
+                                .width(16.dp)
+                                .height(2.dp)
+                                .clip(androidx.compose.foundation.shape.RoundedCornerShape(1.dp))
+                                .background(AppThemeValues.colors.primary)
+                        )
+                    }
                 }
             }
         }

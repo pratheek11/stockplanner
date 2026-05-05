@@ -9,6 +9,7 @@ import com.example.stockplanner.utils.services.HttpClientFactory
 import com.example.stockplanner.utils.services.Quote
 import com.example.stockplanner.utils.services.StockList
 import com.example.stockplanner.db.AppDatabase
+import com.example.stockplanner.db.Watchlist
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -20,6 +21,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.double
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonPrimitive
+import kotlin.time.Clock
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -109,8 +111,8 @@ class AppState(
     private val _currentPositions = MutableStateFlow<ArrayList<HoldingItem>>(ArrayList())
     val currentPositions: StateFlow<ArrayList<HoldingItem>> = _currentPositions
 
-    private val _currentFullChart = MutableStateFlow<ChartHeaderList?>(null)
-    val currentFullChart: StateFlow<ChartHeaderList?> = _currentFullChart
+    private val _currentFullChart = MutableStateFlow<Watchlist?>(null)
+    val currentFullChart: StateFlow<Watchlist?> = _currentFullChart
 
     val appNavigationButtons = listOf(
         NavigationButtons("Charts", Screen.Charts),
@@ -118,8 +120,8 @@ class AppState(
         NavigationButtons("Profile", Screen.Profile)
     )
 
-    private val _chartItemByList = MutableStateFlow<HashMap<String, ArrayList<StockList>>>(HashMap())
-    val chartItemByList: StateFlow<HashMap<String, ArrayList<StockList>>> = _chartItemByList
+    private val _chartItemByList = MutableStateFlow<HashMap<String, List<Watchlist>>>(HashMap())
+    val chartItemByList: StateFlow<HashMap<String, List<Watchlist>>> = _chartItemByList
     private val _quote = MutableStateFlow<Quote?>(null)
     val quote: StateFlow<Quote?> = _quote
 
@@ -333,8 +335,13 @@ class AppState(
         _currentList.value = label
     }
 
-    fun setCurrentFullChart(label: String, id: String) {
-        _currentList.value = ChartHeaderList(label, id)
+    fun setCurrentFullChart(item: Watchlist) {
+        _currentFullChart.value = item
+    }
+
+    fun setCurrentFullChart(item: StockList) {
+        _currentFullChart.value = Watchlist(1, currentList.value?.id + "", item.trading_symbol, item.name, item.exchange,
+            Clock.System.now().epochSeconds)
     }
 
     fun deleteUserWatchList() {
@@ -342,9 +349,9 @@ class AppState(
     }
 
     fun getChartHeaderList() {
-        var list = dbManager?.getUserWatchlist(userName)
+        val list = dbManager?.getUserWatchlist(userName)
         list?.forEach { watchlist ->
-            var list = _chatHeaderList.value
+            var list = emptyList<ChartHeaderList>()
             val newEle = ChartHeaderList(watchlist.label, watchlist.watchListId)
             list = list.plus(newEle)
             _chatHeaderList.value = list
@@ -366,9 +373,31 @@ class AppState(
         _chartItemByList.value = newMap
     }
 
-    fun insertItemIntoChartList(listName: String, items: List<StockList>) {
+    fun insertItemIntoChartList(listName: String, items: StockList) {
+        addElementToChartList(listName, items)
+        dbManager?.insertItemIntoChartList(listName, items)
+    }
+
+    fun addElementToChartList(listName: String, items: StockList) {
         val newMap = HashMap(_chartItemByList.value)
-        newMap[listName] = ArrayList(items)
+        if(newMap.isNotEmpty() && newMap[listName].isNullOrEmpty()) {
+            newMap[listName] = ArrayList()
+        }
+        val newList = newMap[listName]?.plus(Watchlist(1,listName, items.trading_symbol, items.name, items.exchange,
+            Clock.System.now().epochSeconds))
+        if(!newList.isNullOrEmpty()) {
+            newMap[listName] = newList
+        }
+        _chartItemByList.value = newMap
+    }
+
+    fun getItemFromChartListByList(listName: String) {
+        val list = dbManager?.getItemFromChartListByList(listName)
+        val newMap = HashMap(_chartItemByList.value)
+        if(newMap.isNotEmpty() && newMap[listName].isNullOrEmpty()) {
+            newMap[listName] = ArrayList()
+        }
+        if(!list.isNullOrEmpty()) newMap[listName] = list
         _chartItemByList.value = newMap
     }
 

@@ -21,27 +21,25 @@ DELETE FROM userWatchList WHERE userId = ?;
 -- Watchlist Table
 CREATE TABLE IF NOT EXISTS watchlist (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    symbol TEXT NOT NULL UNIQUE,
+    listId TEXT NOT NULL,
+    symbol TEXT NOT NULL,
     name TEXT NOT NULL,
-    currentPrice REAL NOT NULL,
+    exchange TEXT NOT NULL,
     addedDate INTEGER NOT NULL
 );
 
 selectAllWatchlist:
 SELECT * FROM watchlist;
 
-selectWatchlistBySymbol:
-SELECT * FROM watchlist WHERE symbol = ?;
+selectWatchlistByListId:
+SELECT * FROM watchlist WHERE listId = ?;
 
 insertWatchlist:
-INSERT INTO watchlist(symbol, name, currentPrice, addedDate)
-VALUES (?, ?, ?, ?);
+INSERT INTO watchlist(listId, symbol, name, exchange, addedDate)
+VALUES (?, ?, ?, ?, ?);
 
-updateWatchlistPrice:
-UPDATE watchlist SET currentPrice = ? WHERE symbol = ?;
-
-deleteWatchlistBySymbol:
-DELETE FROM watchlist WHERE symbol = ?;
+deleteWatchlistByListIdAndSymbol:
+DELETE FROM watchlist WHERE listId = ? AND symbol = ?;
 
 deleteAllWatchlist:
 DELETE FROM watchlist;

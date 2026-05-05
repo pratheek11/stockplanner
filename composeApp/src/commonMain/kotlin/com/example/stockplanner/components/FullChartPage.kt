@@ -49,7 +49,7 @@ fun FullChartPage(
                     .padding(AppThemeValues.spacing.small)
             )
             Text(
-                text = currentItem?.label + ""
+                text = currentItem?.name + ""
             )
         }
     }
