@@ -3,6 +3,10 @@ package com.example.stockplanner.database
 import com.example.stockplanner.db.AppDatabase
 import com.example.stockplanner.db.GetUserDetails
 import com.example.stockplanner.db.UserWatchList
+import com.example.stockplanner.db.Watchlist
+import com.example.stockplanner.utils.services.StockList
+import kotlinx.datetime.TimeZone
+import kotlin.time.Clock
 
 /**
  * Database Manager for common operations
@@ -415,7 +419,24 @@ class DatabaseManager(private val database: AppDatabase) {
         try{
             database.appDatabaseQueries.deleteUserWatchList(userName)
         } catch (e: Exception) {
-            println("✗ Error fetching user details: ${e.message}")
+            println("✗ Error deleting user details: ${e.message}")
+        }
+    }
+
+    fun insertItemIntoChartList(listName: String, item: StockList) {
+        try{
+            database.appDatabaseQueries.insertWatchlist(listName, item.trading_symbol, item.name, item.exchange, Clock.System.now().epochSeconds)
+        } catch (e: Exception) {
+            println("✗ Error inserting chart list details: ${e.message}")
+        }
+    }
+
+    fun getItemFromChartListByList(listName: String): List<Watchlist>  {
+        try{
+            return database.appDatabaseQueries.selectWatchlistByListId(listName).executeAsList()
+        } catch (e: Exception) {
+            println("✗ Error getting chart list by listId details: ${e.message}")
+            return emptyList<Watchlist>()
         }
     }
 }
